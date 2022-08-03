@@ -21,7 +21,7 @@ export class MediaFiles {
      * Returns the media file path.
      */
     public async add(mediaFile: Binary, mime: MimeType): Promise<string> {
-
+        console.log("MediaFiles.add(), mime: "+mime);
         // check if already added
         if (this.files.has(mediaFile))
             return this.files.get(mediaFile);

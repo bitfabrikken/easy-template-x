@@ -1,6 +1,6 @@
 import { ScopeData, Tag, TemplateContext } from '../../compilation';
 import { MimeTypeHelper } from '../../mimeType';
-import { XmlGeneralNode, XmlNode } from '../../xml';
+import { XmlNode } from '../../xml';
 import { TemplatePlugin } from '../templatePlugin';
 import { XlsContent } from './xlsContent';
 
@@ -22,7 +22,7 @@ export class XlsPlugin extends TemplatePlugin {
 
     public async simpleTagReplacements(tag: Tag, data: ScopeData, context: TemplateContext): Promise<void> {
 
-        const wordTextNode = this.utilities.docxParser.containingTextNode(tag.xmlTextNode);
+        const wordTextNode = this.utilities.docxParser.containingParagraphNode(tag.xmlTextNode);
 
         const content = data.getScopeData<XlsContent>();
         if (!content || !content.source) {
@@ -38,58 +38,38 @@ export class XlsPlugin extends TemplatePlugin {
 
         // create the xml markup
         const fileId = nextFileId++;
-        const xlsXml = this.createMarkup(fileId, relId, content.width, content.height);
+        const shapeId = "xls_shape"+relId;
+        const progId = "Excel.Sheet.12";
 
-        XmlNode.insertAfter(xlsXml, wordTextNode);
+        const wrapType = "topAndBottom"; //or square
+        console.log("relId: "+relId+", fileId: "+fileId);
+
+        var xml = `
+            <w:p>
+                <w:r>
+                    <w:object w:dxaOrig="9000" w:dyaOrig="5800">
+                        <v:shape id="${shapeId}" style="
+                            position:absolute;
+                            margin-left:0pt;
+                            margin-top:0pt;
+                            width:400pt;
+                            height:250pt;
+                            mso-position-horizontal-relative:text;
+                            mso-position-vertical-relative:text;
+                        " o:ole="">
+                            <w10:wrap type="${wrapType}"/>
+                        </v:shape>
+                        <o:OLEObject Type="Embed" ProgID="${progId}" ShapeID="${shapeId}" DrawAspect="Content" r:id="${relId}"/>
+                    </w:object>
+                </w:r>
+            </w:p>
+        `;
+        const newNode = this.utilities.xmlParser.parse(xml);
+
+        XmlNode.insertBefore(newNode, wordTextNode);
         XmlNode.remove(wordTextNode);
     }
 
-    private createMarkup(fileId: number, relId: string, width: number, height: number): XmlNode {
 
-        // http://officeopenxml.com/drwPicInline.php
-
-        //
-        // Performance note:
-        //
-        // I've tried to improve the markup generation performance by parsing
-        // the string once and caching the result (and of course customizing it
-        // per image) but it made no change whatsoever (in both cases 1000 items
-        // loop takes around 8 seconds on my machine) so I'm sticking with this
-        // approach which I find to be more readable.
-        //
-
-        const name = `Xls ${fileId}`;
-        const markupText = `
-        <w:p>
-            <w:pPr>
-                <w:pStyle w:val="TextBody"/>
-                <w:bidi w:val="0"/>
-                <w:jc w:val="left"/>
-                <w:rPr>
-                    <w:sz w:val="28"/>
-                    <w:szCs w:val="28"/>
-                </w:rPr>
-            </w:pPr>
-            <w:r>
-                <w:rPr>
-                    <w:sz w:val="28"/>
-                    <w:szCs w:val="28"/>
-                </w:rPr>
-                <w:object w:dxaOrig="8974" w:dyaOrig="1280">
-                    <v:shape id="ole_${relId}" style="position:absolute;margin-left:2.05pt;margin-top:2.55pt;width:471.3pt;height:58.7pt;mso-position-horizontal-relative:text;mso-position-vertical-relative:text" o:ole="">
-                        <v:imagedata r:id="rId3" o:title=""/>
-                        <w10:wrap type="square"/>
-                    </v:shape>
-                    <o:OLEObject Type="Embed" ProgID="Excel.Sheet.12" ShapeID="ole_${relId}" DrawAspect="Content" ObjectID="_319377850" r:id="${relId}"/>
-                </w:object>
-            </w:r>
-        </w:p>
-        `;
-
-        const markupXml = this.utilities.xmlParser.parse(markupText) as XmlGeneralNode;
-        XmlNode.removeEmptyTextNodes(markupXml); // remove whitespace
-
-        return markupXml;
-    }
 
 }
