@@ -6,3 +6,4 @@ export * from './text';
 export * from './defaultPlugins';
 export * from './pluginContent';
 export * from './templatePlugin';
+export * from './xls';

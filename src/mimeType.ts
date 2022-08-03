@@ -5,7 +5,8 @@ export enum MimeType {
     Jpeg = 'image/jpeg',
     Gif = 'image/gif',
     Bmp = 'image/bmp',
-    Svg = 'image/svg+xml'
+    Svg = 'image/svg+xml',
+    Xls = 'application/vnd.ms-excel'
 }
 
 export class MimeTypeHelper {
@@ -22,6 +23,8 @@ export class MimeTypeHelper {
                 return 'bmp';
             case MimeType.Svg:
                 return 'svg';
+            case MimeType.Xls:
+                return 'xls';
             default:
                 throw new UnsupportedFileTypeError(mime);
         }
