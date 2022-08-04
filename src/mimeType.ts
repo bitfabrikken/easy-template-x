@@ -26,7 +26,6 @@ export class MimeTypeHelper {
             case MimeType.Xls:
                 return 'xls';
             default:
-                console.log("UNSUP MIME: ",mime);
                 throw new UnsupportedFileTypeError(mime);
         }
     }
@@ -42,7 +41,6 @@ export class MimeTypeHelper {
             case MimeType.Xls:
                 return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument";
             default:
-                console.log("UNSUP MIME2: ",mime);
                 throw new UnsupportedFileTypeError(mime);
         }
     }

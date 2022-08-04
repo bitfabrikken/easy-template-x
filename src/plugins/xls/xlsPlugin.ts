@@ -4,17 +4,6 @@ import { XmlNode } from '../../xml';
 import { TemplatePlugin } from '../templatePlugin';
 import { XlsContent } from './xlsContent';
 
-/**
- * Apparently it is not that important for the ID to be unique...
- * Word displays two images correctly even if they both have the same ID.
- * Further more, Word will assign each a unique ID upon saving (it assigns
- * consecutive integers starting with 1).
- *
- * Note: The same principal applies to image names.
- *
- * Tested in Word v1908
- */
-let nextFileId = 1;
 
 export class XlsPlugin extends TemplatePlugin {
 
@@ -31,29 +20,39 @@ export class XlsPlugin extends TemplatePlugin {
         }
 
         // add the xls file into the archive
+        // for now, for brevity, we add files to mediaDir (word/media in the xls archive)
         const mediaFilePath = await context.docx.mediaFiles.add(content.source, content.format);
         const relType = MimeTypeHelper.getOfficeRelType(content.format);
         const relId = await context.currentPart.rels.add(mediaFilePath, relType);
         await context.docx.contentTypes.ensureContentType(content.format);
 
-        // create the xml markup
-        const fileId = nextFileId++;
+        
+        // prepare vars for xml markup
         const shapeId = "xls_shape"+relId;
-        const progId = "Excel.Sheet.12";
-
+        const progId = "Excel.Sheet.12"; //not sure why this is needed yet or if it'll cause any trouble leaving like this
         const wrapType = "topAndBottom"; //or square
-        console.log("relId: "+relId+", fileId: "+fileId);
 
+        const width = content.width || 450;
+        const height = content.height || 300;
+        const dxaOrig = content.dxaOrig || 9334; //no time atm., to figure out how this parameter works
+        const dyaOrig = content.dyaOrig || 5800; //no time atm., to figure out how this parameter works
+
+
+        // create the xml markup
         var xml = `
             <w:p>
+                <w:pPr>
+                    <w:pStyle w:val="Normal"/>
+                    <w:rPr/>
+                </w:pPr>
                 <w:r>
-                    <w:object w:dxaOrig="9000" w:dyaOrig="5800">
+                    <w:object w:dxaOrig="${dxaOrig}" w:dyaOrig="${dyaOrig}">
                         <v:shape id="${shapeId}" style="
                             position:absolute;
                             margin-left:0pt;
                             margin-top:0pt;
-                            width:400pt;
-                            height:250pt;
+                            width:${width};
+                            height:${height};
                             mso-position-horizontal-relative:text;
                             mso-position-vertical-relative:text;
                         " o:ole="">
